@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EC2 Monitoring</title>
+</head>
+<body>
+
+<h1>EC2 Server Stats</h1>
+
+<div id="data"></div>
+
+<script>
+async function loadData() {
+  const res = await fetch("/stats");
+  const data = await res.json();
+
+  document.getElementById("data").innerHTML = `
+    <p>CPU Load: ${data.cpu}</p>
+    <p>Total Memory: ${data.totalMemory}</p>
+    <p>Free Memory: ${data.freeMemory}</p>
+    <p>Uptime: ${data.uptime}</p>
+  `;
+}
+
+setInterval(loadData, 2000);
+</script>
+
+</body>
+</html>
