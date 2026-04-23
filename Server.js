@@ -4,17 +4,17 @@ const os = require("os");
 const app = express();
 const PORT = 3000;
 
-app.get("/stats", (req, res) => {
-  res.json({
-    cpu: os.loadavg(),
-    totalMemory: os.totalmem(),
-    freeMemory: os.freemem(),
-    uptime: os.uptime()
-  });
+app.get("/api/stats", (req, res) => {
+    res.json({
+        hostname: os.hostname(),
+        platform: os.platform(),
+        uptime: os.uptime(),
+        totalMemory: os.totalmem(),
+        freeMemory: os.freemem(),
+        cpuCount: os.cpus().length
+    });
 });
 
-app.use(express.static(__dirname));
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
