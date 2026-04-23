@@ -2,19 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>EC2 Monitoring Dashboard</title>
+  <title>EC2 Advanced Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: white;
-      text-align: center;
       margin: 0;
       padding: 20px;
+      text-align: center;
     }
 
     h1 {
+      margin-bottom: 10px;
+    }
+
+    .status {
       margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .online {
+      color: #22c55e;
+    }
+
+    .offline {
+      color: red;
     }
 
     .container {
@@ -28,63 +43,86 @@
       background: #1e293b;
       padding: 20px;
       border-radius: 10px;
-      width: 200px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      width: 220px;
     }
 
-    .title {
-      font-size: 14px;
-      color: #94a3b8;
-    }
-
-    .value {
-      font-size: 20px;
-      margin-top: 10px;
-      font-weight: bold;
+    canvas {
+      max-width: 600px;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
 
-<h1>🚀 EC2 Monitoring Dashboard</h1>
+<h1>🚀 EC2 Advanced Monitoring</h1>
+<div id="status" class="status">Checking...</div>
 
 <div class="container">
-  <div class="card">
-    <div class="title">Uptime</div>
-    <div id="uptime" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <div class="title">Platform</div>
-    <div id="platform" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <div class="title">CPU Cores</div>
-    <div id="cpu" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <div class="title">Free Memory</div>
-    <div id="memory" class="value">--</div>
-  </div>
+  <div class="card">Uptime: <span id="uptime">--</span></div>
+  <div class="card">Platform: <span id="platform">--</span></div>
+  <div class="card">CPU Cores: <span id="cpu">--</span></div>
+  <div class="card">Memory: <span id="memory">--</span></div>
 </div>
 
+<canvas id="chart"></canvas>
+
 <script>
+let labels = [];
+let cpuData = [];
+let memData = [];
+
+const ctx = document.getElementById('chart').getContext('2d');
+
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: 'CPU Cores',
+        data: cpuData,
+        borderWidth: 2
+      },
+      {
+        label: 'Free Memory (MB)',
+        data: memData,
+        borderWidth: 2
+      }
+    ]
+  }
+});
+
 async function loadStats() {
   try {
     const res = await fetch('/api/stats');
     const data = await res.json();
 
+    document.getElementById('status').innerText = "🟢 Server Online";
+    document.getElementById('status').className = "status online";
+
     document.getElementById('uptime').innerText =
       Math.floor(data.uptime / 60) + " mins";
-
     document.getElementById('platform').innerText = data.platform;
     document.getElementById('cpu').innerText = data.cpu;
     document.getElementById('memory').innerText = data.memory;
 
+    const time = new Date().toLocaleTimeString();
+
+    labels.push(time);
+    cpuData.push(data.cpu);
+    memData.push(parseFloat(data.memory));
+
+    if (labels.length > 10) {
+      labels.shift();
+      cpuData.shift();
+      memData.shift();
+    }
+
+    chart.update();
+
   } catch (err) {
-    console.log("Error fetching data");
+    document.getElementById('status').innerText = "🔴 Server Offline";
+    document.getElementById('status').className = "status offline";
   }
 }
 
