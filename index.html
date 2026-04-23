@@ -1,22 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>EC2 Monitoring</title>
+  <meta charset="UTF-8">
+  <title>EC2 Monitoring Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      width: 200px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .title {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .value {
+      font-size: 20px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-    <h1>EC2 Server Stats</h1>
-    <pre id="data">Loading...</pre>
 
-    <script>
-        fetch("/api/stats")
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById("data").innerText =
-                    JSON.stringify(data, null, 2);
-            })
-            .catch(err => {
-                document.getElementById("data").innerText = "Error loading data";
-            });
-    </script>
+<h1>🚀 EC2 Monitoring Dashboard</h1>
+
+<div class="container">
+  <div class="card">
+    <div class="title">Uptime</div>
+    <div id="uptime" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Platform</div>
+    <div id="platform" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">CPU Cores</div>
+    <div id="cpu" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Free Memory</div>
+    <div id="memory" class="value">--</div>
+  </div>
+</div>
+
+<script>
+async function loadStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+
+    document.getElementById('uptime').innerText =
+      Math.floor(data.uptime / 60) + " mins";
+
+    document.getElementById('platform').innerText = data.platform;
+    document.getElementById('cpu').innerText = data.cpu;
+    document.getElementById('memory').innerText = data.memory;
+
+  } catch (err) {
+    console.log("Error fetching data");
+  }
+}
+
+setInterval(loadStats, 2000);
+loadStats();
+</script>
+
 </body>
 </html>
