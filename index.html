@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>EC2 Advanced Dashboard</title>
+  <title>EC2 Advanced Monitoring</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -37,6 +37,7 @@
       justify-content: center;
       gap: 20px;
       flex-wrap: wrap;
+      margin-bottom: 30px;
     }
 
     .card {
@@ -44,11 +45,12 @@
       padding: 20px;
       border-radius: 10px;
       width: 220px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
 
     canvas {
-      max-width: 600px;
-      margin-top: 30px;
+      max-width: 800px;
+      margin: auto;
     }
   </style>
 </head>
@@ -61,6 +63,7 @@
   <div class="card">Uptime: <span id="uptime">--</span></div>
   <div class="card">Platform: <span id="platform">--</span></div>
   <div class="card">CPU Cores: <span id="cpu">--</span></div>
+  <div class="card">CPU Usage: <span id="cpuUsage">--</span></div>
   <div class="card">Memory: <span id="memory">--</span></div>
 </div>
 
@@ -79,12 +82,12 @@ const chart = new Chart(ctx, {
     labels: labels,
     datasets: [
       {
-        label: 'CPU Cores',
+        label: 'CPU Usage (%)',
         data: cpuData,
         borderWidth: 2
       },
       {
-        label: 'Free Memory (MB)',
+        label: 'Memory Used (MB)',
         data: memData,
         borderWidth: 2
       }
@@ -97,20 +100,30 @@ async function loadStats() {
     const res = await fetch('/api/stats');
     const data = await res.json();
 
+    // Status
     document.getElementById('status').innerText = "🟢 Server Online";
     document.getElementById('status').className = "status online";
 
+    // Cards
     document.getElementById('uptime').innerText =
       Math.floor(data.uptime / 60) + " mins";
-    document.getElementById('platform').innerText = data.platform;
-    document.getElementById('cpu').innerText = data.cpu;
-    document.getElementById('memory').innerText = data.memory;
 
+    document.getElementById('platform').innerText = data.platform;
+
+    document.getElementById('cpu').innerText = data.cpuCores;
+
+    document.getElementById('cpuUsage').innerText =
+      data.cpuUsage + " %";
+
+    document.getElementById('memory').innerText =
+      `${data.memory.used} MB / ${data.memory.total} MB`;
+
+    // Chart update
     const time = new Date().toLocaleTimeString();
 
     labels.push(time);
-    cpuData.push(data.cpu);
-    memData.push(parseFloat(data.memory));
+    cpuData.push(parseFloat(data.cpuUsage));
+    memData.push(parseFloat(data.memory.used));
 
     if (labels.length > 10) {
       labels.shift();
@@ -126,6 +139,7 @@ async function loadStats() {
   }
 }
 
+// Refresh every 2 sec
 setInterval(loadStats, 2000);
 loadStats();
 </script>
