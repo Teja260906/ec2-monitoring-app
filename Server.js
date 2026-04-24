@@ -44,3 +44,5 @@ app.get("/api/stats", (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+document.getElementById("disk").innerText =
+  data.disk.used + " / " + data.disk.total + " (" + data.disk.usage + ")";
