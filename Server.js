@@ -1,18 +1,15 @@
 const express = require("express");
 const os = require("os");
 const path = require("path");
+const { exec } = require("child_process");
 
 const app = express();
 const PORT = 3000;
 
-// 🔥 IMPORTANT: serve index.html
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
+// ✅ Serve frontend (VERY IMPORTANT)
+app.use(express.static(__dirname));
 
-// API
-const { exec } = require("child_process");
-
+// ✅ API route
 app.get("/api/stats", (req, res) => {
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
@@ -46,9 +43,7 @@ app.get("/api/stats", (req, res) => {
   });
 });
 
-// Start
+// ✅ Start server
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
-document.getElementById("disk").innerText =
-  data.disk.used + " / " + data.disk.total + " (" + data.disk.usage + ")";
