@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>EC2 Advanced Monitoring</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: white;
+      text-align: center;
       margin: 0;
       padding: 20px;
-      text-align: center;
     }
 
     h1 {
@@ -20,132 +20,124 @@
     }
 
     .status {
+      color: #22c55e;
       margin-bottom: 20px;
       font-weight: bold;
     }
 
-    .online {
-      color: #22c55e;
-    }
-
-    .offline {
-      color: red;
-    }
-
     .container {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
-      flex-wrap: wrap;
-      margin-bottom: 30px;
     }
 
     .card {
       background: #1e293b;
       padding: 20px;
-      border-radius: 10px;
-      width: 220px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      border-radius: 12px;
+      width: 200px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
     }
 
-    canvas {
-      max-width: 800px;
-      margin: auto;
+    .card h3 {
+      margin-bottom: 10px;
+    }
+
+    .value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2563eb;
     }
   </style>
 </head>
+
 <body>
 
-<h1>🚀 EC2 Advanced Monitoring</h1>
-<div id="status" class="status">Checking...</div>
+  <h1>🚀 EC2 Advanced Monitoring</h1>
+  <div class="status">🟢 Server Online</div>
 
-<div class="container">
-  <div class="card">Uptime: <span id="uptime">--</span></div>
-  <div class="card">Platform: <span id="platform">--</span></div>
-  <div class="card">CPU Cores: <span id="cpu">--</span></div>
-  <div class="card">CPU Usage: <span id="cpuUsage">--</span></div>
-  <div class="card">Memory: <span id="memory">--</span></div>
-</div>
+  <div class="container">
+    <div class="card">
+      <h3>CPU Cores</h3>
+      <div id="cpu" class="value">-</div>
+    </div>
 
-<canvas id="chart"></canvas>
+    <div class="card">
+      <h3>CPU Usage</h3>
+      <div id="cpuUsage" class="value">-</div>
+    </div>
 
-<script>
-let labels = [];
-let cpuData = [];
-let memData = [];
+    <div class="card">
+      <h3>Platform</h3>
+      <div id="platform" class="value">-</div>
+    </div>
 
-const ctx = document.getElementById('chart').getContext('2d');
+    <div class="card">
+      <h3>Uptime</h3>
+      <div id="uptime" class="value">-</div>
+    </div>
 
-const chart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: [
-      {
-        label: 'CPU Usage (%)',
-        data: cpuData,
-        borderWidth: 2
-      },
-      {
-        label: 'Memory Used (MB)',
-        data: memData,
-        borderWidth: 2
-      }
-    ]
-  }
-});
+    <div class="card">
+      <h3>Memory</h3>
+      <div id="memory" class="value">-</div>
+    </div>
 
-async function loadStats() {
-  try {
-    const res = await fetch('/api/stats');
-    const data = await res.json();
+    <div class="card">
+      <h3>Disk Usage</h3>
+      <div id="disk" class="value">-</div>
+    </div>
+  </div>
 
-    // Status
-    document.getElementById('status').innerText = "🟢 Server Online";
-    document.getElementById('status').className = "status online";
+  <button onclick="loadData()">🔄 Refresh</button>
 
-    // Cards
-    document.getElementById('uptime').innerText =
-      Math.floor(data.uptime / 60) + " mins";
+  <script>
+    function loadData() {
+      fetch("/api/stats")
+        .then(res => res.json())
+        .then(data => {
+          console.log(data);
 
-    document.getElementById('platform').innerText = data.platform;
+          document.getElementById("cpu").innerText = data.cpuCores;
+          document.getElementById("cpuUsage").innerText = data.cpuUsage + " %";
+          document.getElementById("platform").innerText = data.platform;
 
-    document.getElementById('cpu').innerText = data.cpuCores;
+          document.getElementById("uptime").innerText =
+            Math.floor(data.uptime / 60) + " mins";
 
-    document.getElementById('cpuUsage').innerText =
-      data.cpuUsage + " %";
+          document.getElementById("memory").innerText =
+            data.memory.used + " / " + data.memory.total + " MB";
 
-    document.getElementById('memory').innerText =
-      `${data.memory.used} MB / ${data.memory.total} MB`;
-
-    // Chart update
-    const time = new Date().toLocaleTimeString();
-
-    labels.push(time);
-    cpuData.push(parseFloat(data.cpuUsage));
-    memData.push(parseFloat(data.memory.used));
-
-    if (labels.length > 10) {
-      labels.shift();
-      cpuData.shift();
-      memData.shift();
+          // ✅ FIXED DISK DISPLAY
+          if (data.disk && data.disk.used) {
+            document.getElementById("disk").innerText =
+              data.disk.used + " / " + data.disk.total + " (" + data.disk.usage + ")";
+          } else {
+            document.getElementById("disk").innerText = "No Data";
+          }
+        })
+        .catch(err => {
+          console.error("Error:", err);
+        });
     }
 
-    chart.update();
+    // auto refresh
+    setInterval(loadData, 2000);
+    loadData();
+  </script>
 
-  } catch (err) {
-    document.getElementById('status').innerText = "🔴 Server Offline";
-    document.getElementById('status').className = "status offline";
-  }
-}
-
-// Refresh every 2 sec
-setInterval(loadStats, 2000);
-loadStats();
-</script>
-<div class="card">
-  <h3>Disk Usage</h3>
-  <p id="disk"></p>
-</div>
 </body>
 </html>
